@@ -1,6 +1,7 @@
 # This is a compatibility layer for using the pure Ruby postgres-pr instead of
 # the C interface of postgres.
 
+require 'rexml/syncenumerator'
 require 'postgres-pr/connection'
 
 class PGconn
@@ -89,7 +90,10 @@ class PGresult
   def initialize(res)
     @res = res
     @fields = @res.fields.map {|f| f.name}
-    @result = @res.rows
+    @result = []
+    @res.rows.each do |row|
+      @result << REXML::SyncEnumerator.new(fields, row).map {|name, value| [name, value]}
+    end
   end
 
   # TODO: status, getlength, cmdstatus
@@ -124,7 +128,7 @@ class PGresult
   alias :ftype :type
 
   def size(index)
-    raise PGError, 'size not implemented'
+    raise
     # TODO: correct?
     @res.fields[index].typlen
   end
@@ -166,4 +170,5 @@ class PGresult
 
 end
 
-PGError = PostgresPR::PGError
+class PGError < Exception
+end
