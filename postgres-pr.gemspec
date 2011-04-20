@@ -12,8 +12,8 @@ spec = Gem::Specification.new do |s|
 
   s.require_path = 'lib'
 
-  s.authors = ["Michael Neumann", "Jeremy Evans", "Alexander E. Fischer", "Aaron Hamid", "Rahim Packir Saibo", "Kashif Rasul"]
-  s.email = ["mneumann@ntecs.de", "code@jeremyevans.net", "aef@raxys.net", "kashif@nomad-labs.com"] 
+  s.authors = ["Michael Neumann", "Jeremy Evans", "Alexander E. Fischer", "Aaron Hamid", "Rahim Packir Saibo", "Lars Christensen", "Kashif Rasul"]
+  s.email = ["mneumann@ntecs.de", "code@jeremyevans.net", "aef@raxys.net", "larsch@belunktum.dk", "kashif@nomad-labs.com"] 
   s.homepage = "https://github.com/kashif/em_postgresql"
-  s.licenses          = ["Ruby", "GPL"]
+  s.licenses = ["Ruby", "GPL"]
 end
