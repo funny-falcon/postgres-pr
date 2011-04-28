@@ -10,7 +10,7 @@ s << msg.dump
 
 Thread.start(s) { |s|
   sleep 2
-  s << Query.new("drop table test").dump
+  s << Query.new("DROP TABLE IF EXISTS test").dump
   s << Query.new("create table test (i int, v varchar(100))").dump
   s << Parse.new("insert into test (i, v) values ($1, $2)", "blah").dump 
   s << Query.new("EXECUTE blah(1, 'hallo')").dump

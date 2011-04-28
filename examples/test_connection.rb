@@ -2,7 +2,7 @@ $LOAD_PATH.unshift '../lib'
 require 'postgres-pr/connection'
 
 conn = PostgresPR::Connection.new('mneumann', 'mneumann', nil, 'unix:/var/run/postgresql/.s.PGSQL.5432')
-p conn.query("DROP TABLE test") rescue nil
+p conn.query("DROP TABLE IF EXISTS test") rescue nil
 p conn.query("CREATE TABLE test (a VARCHAR(100))")
 p conn.query("INSERT INTO test VALUES ('hallo')") 
 p conn.query("INSERT INTO test VALUES ('leute')") 
