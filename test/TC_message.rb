@@ -70,7 +70,7 @@ end
 class TC_Message < Test::Unit::TestCase
 
   CASES = [ 
-    #[AuthentificationOk], 
+    #[AuthenticationOk], 
     #[ErrorResponse],
     [ParameterStatus, "key", "value"],
     [BackendKeyData, 234234234, 213434],

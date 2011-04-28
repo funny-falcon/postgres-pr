@@ -56,15 +56,15 @@ class Connection
       msg = Message.read(@conn)
 
       case msg
-      when AuthentificationClearTextPassword
+      when AuthenticationClearTextPassword
         raise PGError, "no password specified" if password.nil?
         @conn << PasswordMessage.new(password).dump
 
-      when AuthentificationCryptPassword
+      when AuthenticationCryptPassword
         raise PGError, "no password specified" if password.nil?
         @conn << PasswordMessage.new(password.crypt(msg.salt)).dump
 
-      when AuthentificationMD5Password
+      when AuthenticationMD5Password
         raise PGError, "no password specified" if password.nil?
         require 'digest/md5'
 
@@ -73,10 +73,10 @@ class Connection
         m = 'md5' + m
         @conn << PasswordMessage.new(m).dump
 
-      when AuthentificationKerberosV4, AuthentificationKerberosV5, AuthentificationSCMCredential
-        raise PGError, "unsupported authentification"
+      when AuthenticationKerberosV4, AuthenticationKerberosV5, AuthenticationSCMCredential
+        raise PGError, "unsupported Authentication"
 
-      when AuthentificationOk
+      when AuthenticationOk
       when ErrorResponse
         raise PGError, msg.field_values.join("\t")
       when NoticeResponse

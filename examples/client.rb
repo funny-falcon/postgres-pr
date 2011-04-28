@@ -26,7 +26,7 @@ loop do
   p msg
 
   case msg
-  when AuthentificationOk
+  when AuthenticationOk
     p "OK"
   when ErrorResponse
     p "FAILED"

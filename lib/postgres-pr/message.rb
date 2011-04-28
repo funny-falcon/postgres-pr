@@ -105,7 +105,7 @@ class UnknownMessageType < Message
   end
 end
 
-class Authentification < Message
+class Authentication < Message
   register_message_type 'R'
 
   AuthTypeMap = Hash.new { UnknownAuthType }
@@ -144,26 +144,26 @@ class Authentification < Message
   end
 end
 
-class UnknownAuthType < Authentification
+class UnknownAuthType < Authentication
 end
 
-class AuthentificationOk < Authentification 
+class AuthenticationOk < Authentication 
   register_auth_type 0
 end
 
-class AuthentificationKerberosV4 < Authentification 
+class AuthenticationKerberosV4 < Authentication 
   register_auth_type 1
 end
 
-class AuthentificationKerberosV5 < Authentification 
+class AuthenticationKerberosV5 < Authentication 
   register_auth_type 2
 end
 
-class AuthentificationClearTextPassword < Authentification 
+class AuthenticationClearTextPassword < Authentication 
   register_auth_type 3
 end
 
-module SaltedAuthentificationMixin
+module SaltedAuthenticationMixin
   attr_accessor :salt
 
   def initialize(salt)
@@ -186,20 +186,20 @@ module SaltedAuthentificationMixin
   end
 end
 
-class AuthentificationCryptPassword < Authentification 
+class AuthenticationCryptPassword < Authentication 
   register_auth_type 4
-  include SaltedAuthentificationMixin
+  include SaltedAuthenticationMixin
   def salt_size; 2 end
 end
 
 
-class AuthentificationMD5Password < Authentification 
+class AuthenticationMD5Password < Authentication 
   register_auth_type 5
-  include SaltedAuthentificationMixin
+  include SaltedAuthenticationMixin
   def salt_size; 4 end
 end
 
-class AuthentificationSCMCredential < Authentification 
+class AuthenticationSCMCredential < Authentication 
   register_auth_type 6
 end
 
