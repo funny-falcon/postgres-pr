@@ -4,7 +4,7 @@
 # License:: Same as Ruby's or BSD
 # 
 
-require 'buffer'
+require 'postgres-pr/utils/buffer'
 class IO
   def read_exactly_n_bytes(n)
     buf = read(n)
@@ -52,7 +52,7 @@ class Message
     raise ParseError unless length >= 4
 
     # initialize buffer
-    buffer = Buffer.of_size(startup ? length : 1+length)
+    buffer = Utils::Buffer.of_size(startup ? length : 1+length)
     buffer.write(type) unless startup
     buffer.write_int32_network(length)
     buffer.copy_from_stream(stream, length-4)
@@ -71,7 +71,7 @@ class Message
   end
 
   def dump(body_size=0)
-    buffer = Buffer.of_size(5 +  body_size)
+    buffer = Utils::Buffer.of_size(5 +  body_size)
     buffer.write(self.message_type)
     buffer.write_int32_network(4 + body_size)
     yield buffer if block_given?
@@ -480,7 +480,7 @@ class StartupMessage < Message
   def dump
     sz = @params.inject(4 + 4) {|sum, kv| sum + kv[0].size + 1 + kv[1].size + 1} + 1
 
-    buffer = Buffer.of_size(sz)
+    buffer = Utils::Buffer.of_size(sz)
     buffer.write_int32_network(sz)
     buffer.write_int32_network(@proto_version)
     @params.each_pair {|key, value| 
