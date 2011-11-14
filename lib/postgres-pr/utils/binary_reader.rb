@@ -25,14 +25,14 @@ module PostgresPR
 
       def read_int16_big
         # swap bytes if native=little (but we want big)
-        read_int8 * 256 + read_word8
+        yield2bytes{|b1, b2| (b1 < 128 ? b1 : b1 - 256) * 256 + b2}
       end
 
       # == 32 bit
       # === Signed
 
       def read_int32_big
-        (((read_int8 * 256) + read_word8) * 256 + read_word8) * 256 + read_word8
+        yield4bytes{|b1, b2, b3, b4| ((((b1 < 128 ? b1 : b1 - 256) * 256) + b2) * 256 + b3) * 256 + b4}
       end
 
       # == Aliases

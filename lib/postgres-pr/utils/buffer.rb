@@ -67,10 +67,25 @@ module PostgresPR
       end
 
       def readbyte
-        raise EOF, 'cannot read beyond the end of buffer' if @position + 1 > @size
+        raise EOF, 'cannot read beyond the end of buffer' if @position >= @size
         byte = @content.getbyte(@position)
         @position += 1
         byte
+      end
+      
+      def yield2bytes
+        raise EOF, 'cannot read beyond the end of buffer' if @position + 2 > @size
+        byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
+        @position += 2
+        yield byte1, byte2
+      end
+
+      def yield4bytes
+        raise EOF, 'cannot read beyond the end of buffer' if @position + 4 > @size
+        byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
+        byte3, byte4 = @content.getbyte(@position + 2), @content.getbyte(@position + 3)
+        @position += 4
+        yield byte1, byte2, byte3, byte4
       end
 
       def copy_from_stream(stream, n)
