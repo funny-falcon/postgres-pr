@@ -6,24 +6,33 @@ module PostgresPR
       LittleEndian = Little = :LittleEndian
 
       # examines the byte order of the underlying machine
-      def byte_order
-        if [0x12345678].pack("L") == "\x12\x34\x56\x78" 
+      if [0x12345678].pack("L") == "\x12\x34\x56\x78" 
+        def byte_order
           BigEndian
-        else
+        end
+
+        def little_endian?
+          false
+        end
+
+        def big_endian?
+          true
+        end
+      else
+        def byte_order
           LittleEndian
+        end
+
+        def little_endian?
+          true
+        end
+
+        def big_endian?
+          false
         end
       end
 
       alias byteorder byte_order 
-
-      def little_endian?
-        byte_order == LittleEndian
-      end
-
-      def big_endian?
-        byte_order == BigEndian
-      end
-
       alias little? little_endian? 
       alias big? big_endian?
       alias network? big_endian?
