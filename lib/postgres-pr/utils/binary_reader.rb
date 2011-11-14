@@ -11,11 +11,11 @@ module PostgresPR
       # no byteorder for 8 bit! 
 
       def read_word8
-        ru(1, 'C')
+        readbyte
       end
 
       def read_int8
-        ru(1, 'c')
+        (r = readbyte) >= 128 ? r - 256 : r
       end
 
       alias read_byte read_word8
@@ -24,16 +24,26 @@ module PostgresPR
 
       # === Unsigned
       
-      def read_word16_native
-        ru(2, 'S')
+      if ByteOrder.little_endian?
+        def read_word16_native
+          read_word16_little
+        end
+      else
+        def read_word16_native
+          read_word16_big
+        end
       end
 
       def read_word16_little
-        ru(2, 'v')
+        fst = readbyte
+        scd = readbyte
+        scd * 256 + fst
       end
 
       def read_word16_big
-        ru(2, 'n')
+        fst = readbyte
+        scd = readbyte
+        fst * 256 + scd
       end
 
       # === Signed
@@ -49,7 +59,7 @@ module PostgresPR
 
       def read_int16_big
         # swap bytes if native=little (but we want big)
-        ru_swap(2, 's', ByteOrder::Little) 
+        read_int8 * 256 + read_word8
       end
 
       # == 32 bit
@@ -65,7 +75,7 @@ module PostgresPR
       end
 
       def read_word32_big
-        ru(4, 'N')
+        (((read_word8 * 256) + read_word8) * 256 + read_word8) * 256 + read_word8
       end
 
       # === Signed
@@ -80,8 +90,7 @@ module PostgresPR
       end
 
       def read_int32_big
-        # swap bytes if native=little (but we want big)
-        ru_swap(4, 'l', ByteOrder::Little) 
+        (((read_int8 * 256) + read_word8) * 256 + read_word8) * 256 + read_word8
       end
 
       # == Aliases

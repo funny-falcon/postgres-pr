@@ -1,6 +1,12 @@
 require 'postgres-pr/utils/binary_writer'
 require 'postgres-pr/utils/binary_reader'
 
+unless "".respond_to?(:getbyte)
+  class String
+    alias :getbyte :[]
+  end
+end
+
 module PostgresPR
   module Utils
     # Fixed size buffer.
@@ -58,6 +64,13 @@ module PostgresPR
         @content[@position, sz] = str
         @position += sz
         self
+      end
+
+      def readbyte
+        raise EOF, 'cannot read beyond the end of buffer' if @position + 1 > @size
+        byte = @content.getbyte(@position)
+        @position += 1
+        byte
       end
 
       def copy_from_stream(stream, n)
