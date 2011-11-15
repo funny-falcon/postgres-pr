@@ -294,15 +294,18 @@ class DataRow < Message
 
   def parse(buffer)
     super do
+      columns = []
       n_cols = buffer.read_int16_network
-      @columns = (1..n_cols).collect {
+      while n_cols > 0
         len = buffer.read_int32_network 
         if len == -1
-          nil
+          columns << nil
         else
-          buffer.read(len)
+          columns << buffer.read(len)
         end
-      }
+        n_cols -= 1
+      end
+      @columns = columns
     end
   end
 end
@@ -460,8 +463,9 @@ class RowDescription < Message
 
   def parse(buffer)
     super do
+      fields = []
       n_fields = buffer.read_int16_network
-      @fields = (1..n_fields).collect {
+      while n_fields > 0
         f = FieldInfo.new
         f.name       = buffer.read_cstring
         f.oid        = buffer.read_int32_network
@@ -470,8 +474,10 @@ class RowDescription < Message
         f.typlen     = buffer.read_int16_network
         f.atttypmod  = buffer.read_int32_network
         f.formatcode = buffer.read_int16_network
-        f
-      }
+        fields << f
+        n_fields -= 1
+      end
+      @fields = fields
     end
   end
 end
