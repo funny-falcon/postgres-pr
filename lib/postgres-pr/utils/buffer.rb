@@ -1,5 +1,4 @@
 require 'postgres-pr/utils/binary_writer'
-require 'postgres-pr/utils/binary_reader'
 
 unless "".respond_to?(:getbyte)
   class String
@@ -72,20 +71,21 @@ module PostgresPR
         @position += 1
         byte
       end
+      alias read_byte readbyte
       
-      def yield2bytes
+      def read_int16_network
         raise EOF, 'cannot read beyond the end of buffer' if @position + 2 > @size
         byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
         @position += 2
-        yield byte1, byte2
+        (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
       end
 
-      def yield4bytes
+      def read_int32_network
         raise EOF, 'cannot read beyond the end of buffer' if @position + 4 > @size
         byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
         byte3, byte4 = @content.getbyte(@position + 2), @content.getbyte(@position + 3)
         @position += 4
-        yield byte1, byte2, byte3, byte4
+        ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
       end
 
       def copy_from_stream(stream, n)
@@ -123,7 +123,6 @@ module PostgresPR
       end
 
       include BinaryWriterMixin
-      include BinaryReaderMixin
     end
   end
 end
