@@ -47,14 +47,15 @@ class Message
 
   def self.read(stream, startup=false)
     type = stream.read_exactly_n_bytes(1) unless startup
-    length = stream.read_exactly_n_bytes(4).unpack('N').first  # FIXME: length should be signed, not unsigned
+    length_s = stream.read_exactly_n_bytes(4)
+    length = length_s.unpack('N').first  # FIXME: length should be signed, not unsigned
 
     raise ParseError unless length >= 4
 
     # initialize buffer
     buffer = Utils::ReadBuffer.of_size(startup ? length : 1+length)
     buffer.write(type) unless startup
-    buffer.write_int32_network(length)
+    buffer.write(length_s)
     buffer.copy_from_stream(stream, length-4)
     
     (startup ? StartupMessage : MsgTypeMap[type]).create(buffer)
