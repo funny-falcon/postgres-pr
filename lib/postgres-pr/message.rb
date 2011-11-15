@@ -52,7 +52,7 @@ class Message
     raise ParseError unless length >= 4
 
     # initialize buffer
-    buffer = Utils::Buffer.of_size(startup ? length : 1+length)
+    buffer = Utils::ReadBuffer.of_size(startup ? length : 1+length)
     buffer.write(type) unless startup
     buffer.write_int32_network(length)
     buffer.copy_from_stream(stream, length-4)
@@ -71,18 +71,19 @@ class Message
   end
 
   def dump(body_size=0)
-    buffer = Utils::Buffer.of_size(5 +  body_size)
+    buffer = Utils::WriteBuffer.of_size(5 +  body_size)
     buffer.write(self.message_type)
     buffer.write_int32_network(4 + body_size)
     yield buffer if block_given?
     raise DumpError  unless buffer.at_end?
-    return buffer.content
+    buffer.content
   end
 
   def parse(buffer)
     buffer.position = 5
     yield buffer if block_given?
     raise ParseError, buffer.inspect unless buffer.at_end?
+    buffer.close
   end
 
   def self.fields(*attribs)
@@ -480,7 +481,7 @@ class StartupMessage < Message
   def dump
     sz = @params.inject(4 + 4) {|sum, kv| sum + kv[0].size + 1 + kv[1].size + 1} + 1
 
-    buffer = Utils::Buffer.of_size(sz)
+    buffer = Utils::WriteBuffer.of_size(sz)
     buffer.write_int32_network(sz)
     buffer.write_int32_network(@proto_version)
     @params.each_pair {|key, value| 
@@ -490,7 +491,7 @@ class StartupMessage < Message
     buffer.write_byte(0)
 
     raise DumpError unless buffer.at_end?
-    return buffer.content
+    buffer.content
   end
 
   def parse(buffer)

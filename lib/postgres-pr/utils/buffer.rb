@@ -1,3 +1,4 @@
+require 'stringio'
 unless "".respond_to?(:getbyte)
   class String
     alias :getbyte :[]
@@ -7,8 +8,59 @@ end
 
 module PostgresPR
   module Utils
-    # Fixed size buffer.
-    class Buffer
+    class NativeBuffer < StringIO
+      def self.of_size(size)
+        new('#'*size, 'r+')
+      end
+      alias position pos
+      alias position= pos=
+      alias read_byte readbyte
+      alias at_end? eof?
+      alias content string
+      def read_int16_network
+        byte1, byte2 = readbyte, readbyte
+        (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+      end
+      def read_int32_network
+        byte1, byte2 = readbyte, readbyte
+        byte3, byte4 = readbyte, readbyte
+        ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
+      end
+      def write_byte(byte)
+        write(byte.chr)
+      end
+      def write_int32_network(int32)
+        write([int32].pack('N'))
+      end
+      def write_int16_network(int16)
+        write([int16].pack('n'))
+      end
+
+      def copy_from_stream(stream, n)
+        raise ArgumentError if n < 0
+        while n > 0
+          str = stream.read(n) 
+          write(str)
+          n -= str.size
+        end
+        raise if n < 0 
+      end
+
+      NUL = "\000"
+      def write_cstring(cstr)
+        raise ArgumentError, "Invalid Ruby/cstring" if cstr.include?(NUL)
+        write(cstr)
+        write(NUL)
+      end
+
+      # returns a Ruby string without the trailing NUL character
+      def read_cstring
+        readline(NUL)
+      end
+
+    end
+
+    class CustomBuffer
 
       class Error < RuntimeError; end
       class EOF < Error; end 
@@ -26,6 +78,9 @@ module PostgresPR
         @size = content.size
         @content = content
         @position = 0
+      end
+
+      def close
       end
 
       def size
@@ -142,6 +197,14 @@ module PostgresPR
       def read_rest
         read(self.size-@position)
       end
+    end
+
+    if RUBY_ENGINE == 'jruby' || (RUBY_ENGINE == 'ruby' && RUBY_VERSION < '1.9')
+      ReadBuffer = NativeBuffer
+      WriteBuffer = NativeBuffer
+    else
+      ReadBuffer = CustomBuffer
+      WriteBuffer = CustomBuffer
     end
   end
 end
