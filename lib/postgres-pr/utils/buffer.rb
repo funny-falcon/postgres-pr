@@ -1,8 +1,7 @@
-require 'postgres-pr/utils/binary_writer'
-
 unless "".respond_to?(:getbyte)
   class String
     alias :getbyte :[]
+    alias :setbyte :[]=
   end
 end
 
@@ -98,6 +97,28 @@ module PostgresPR
         raise if n < 0 
       end
 
+      def writebyte(byte)
+        raise EOF, 'cannot write beyond the end of buffer' if @position >= @size
+        @content.setbyte(@position, byte)
+        @position += 1
+        self
+      end
+      alias write_byte writebyte
+
+      def write_int16_network(int16)
+        raise EOF, 'cannot write beyond the end of buffer' if @position + 2 > @size
+        @content[@position, 2] = [int16].pack('n')
+        @position += 2
+        self
+      end 
+
+      def write_int32_network(int32)
+        raise EOF, 'cannot write beyond the end of buffer' if @position + 4 > @size
+        @content[@position, 4] = [int32].pack('N')
+        @position += 4
+        self
+      end 
+      
       NUL = "\000"
 
       def write_cstring(cstr)
@@ -121,8 +142,6 @@ module PostgresPR
       def read_rest
         read(self.size-@position)
       end
-
-      include BinaryWriterMixin
     end
   end
 end
