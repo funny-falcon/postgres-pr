@@ -5,6 +5,7 @@
 # 
 
 require 'postgres-pr/utils/buffer'
+require 'postgres-pr/utils/byteorder'
 class IO
   def read_exactly_n_bytes(n)
     buf = read(n)
@@ -461,23 +462,58 @@ class RowDescription < Message
     end
   end
 
-  def parse(buffer)
-    super do
-      fields = []
-      n_fields = buffer.read_int16_network
-      while n_fields > 0
-        f = FieldInfo.new
-        f.name       = buffer.read_cstring
-        f.oid        = buffer.read_int32_network
-        f.attr_nr    = buffer.read_int16_network
-        f.type_oid   = buffer.read_int32_network
-        f.typlen     = buffer.read_int16_network
-        f.atttypmod  = buffer.read_int32_network
-        f.formatcode = buffer.read_int16_network
-        fields << f
-        n_fields -= 1
+  if RUBY_ENGINE == 'rbx'
+    def parse(buffer)
+      super do
+        fields = []
+        n_fields = buffer.read_int16_network
+        while n_fields > 0
+          f = FieldInfo.new
+          f.name       = buffer.read_cstring
+          f.oid        = buffer.read_int32_network
+          f.attr_nr    = buffer.read_int16_network
+          f.type_oid   = buffer.read_int32_network
+          f.typlen     = buffer.read_int16_network
+          f.atttypmod  = buffer.read_int32_network
+          f.formatcode = buffer.read_int16_network
+          fields << f
+          n_fields -= 1
+        end
+        @fields = fields
       end
-      @fields = fields
+    end
+  elsif Utils::ByteOrder.little?
+    def parse(buffer)
+      super do
+        fields = []
+        n_fields = buffer.read_int16_network
+        while n_fields > 0
+          f = FieldInfo.new
+          f.name       = buffer.read_cstring
+          s = buffer.read(18); s.reverse!
+          a = s.unpack('slslsl'); a.reverse!
+          f.oid, f.attr_nr, f.type_oid, f.typlen, f.atttypmod, f.formatcode = a
+          fields << f
+          n_fields -= 1
+        end
+        @fields = fields
+      end
+    end
+  else
+    def parse(buffer)
+      super do
+        fields = []
+        n_fields = buffer.read_int16_network
+        while n_fields > 0
+          f = FieldInfo.new
+          f.name       = buffer.read_cstring
+          a = buffer.read(18).unpack('lslsls')
+          f.formatcode, f.atttypmod, f.typlen, f.type_oid, f.attr_nr, f.oid = a
+          fields << f
+          n_fields -= 1
+        end
+        @fields = fields
+      end
     end
   end
 end
