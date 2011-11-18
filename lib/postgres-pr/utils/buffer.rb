@@ -2,7 +2,23 @@ require 'stringio'
 unless "".respond_to?(:getbyte)
   class String
     alias :getbyte :[]
+  end
+end
+unless "".respond_to?(:setbyte)
+  class String
     alias :setbyte :[]=
+  end
+end
+
+class String
+  def get_int16_network(pos)
+    byte1, byte2 = getbyte(pos), getbyte(pos+1)
+    (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+  end
+  def get_int32_network(pos)
+      byte1, byte2 = getbyte(pos), getbyte(pos+1)
+      byte3, byte4 = getbyte(pos+2), getbyte(pos+3)
+      ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
   end
 end
 
@@ -128,18 +144,17 @@ module PostgresPR
       alias read_byte readbyte
       
       def read_int16_network
-        raise EOF, 'cannot read beyond the end of buffer' if @position + 2 > @size
-        byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
+        pos = @position
+        raise EOF, 'cannot read beyond the end of buffer' if pos + 2 > @size
         @position += 2
-        (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+        @content.get_int16_network(pos)
       end
 
       def read_int32_network
-        raise EOF, 'cannot read beyond the end of buffer' if @position + 4 > @size
-        byte1, byte2 = @content.getbyte(@position), @content.getbyte(@position + 1)
-        byte3, byte4 = @content.getbyte(@position + 2), @content.getbyte(@position + 3)
+        pos = @position
+        raise EOF, 'cannot read beyond the end of buffer' if pos + 4 > @size
         @position += 4
-        ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
+        @content.get_int32_network(pos)
       end
 
       def copy_from_stream(stream, n)
