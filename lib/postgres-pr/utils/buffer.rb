@@ -10,15 +10,31 @@ unless "".respond_to?(:setbyte)
   end
 end
 
-class String
-  def get_int16_network(pos)
-    byte1, byte2 = getbyte(pos), getbyte(pos+1)
-    (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+if RUBY_ENGINE == 'ruby'
+  begin
+    require 'unpack_single'
+    puts "unpack loaded"
+  rescue LoadError
   end
-  def get_int32_network(pos)
+end
+
+module PostgresPR
+  module Utils
+    STRING_NATIVE_UNPACK_SINGLE = "".respond_to?(:get_int16_network)
+  end
+end
+
+unless PostgresPR::Utils::STRING_NATIVE_UNPACK_SINGLE 
+  class String
+    def get_int16_network(pos)
+      byte1, byte2 = getbyte(pos), getbyte(pos+1)
+      (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+    end
+    def get_int32_network(pos)
       byte1, byte2 = getbyte(pos), getbyte(pos+1)
       byte3, byte4 = getbyte(pos+2), getbyte(pos+3)
       ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
+    end
   end
 end
 
@@ -33,14 +49,23 @@ module PostgresPR
       alias read_byte readbyte
       alias at_end? eof?
       alias content string
-      def read_int16_network
-        byte1, byte2 = readbyte, readbyte
-        (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
-      end
-      def read_int32_network
-        byte1, byte2 = readbyte, readbyte
-        byte3, byte4 = readbyte, readbyte
-        ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
+      if STRING_NATIVE_UNPACK_SINGLE
+        def read_int16_network
+          read(2).get_int16_network(0)
+        end
+        def read_int32_network
+          read(4).get_int32_network(0)
+        end
+      else
+        def read_int16_network
+          byte1, byte2 = readbyte, readbyte
+          (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
+        end
+        def read_int32_network
+          byte1, byte2 = readbyte, readbyte
+          byte3, byte4 = readbyte, readbyte
+          ((((byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2) * 256) + byte3) * 256 + byte4
+        end
       end
       def write_byte(byte)
         write(byte.chr)
