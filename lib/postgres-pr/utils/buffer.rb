@@ -50,12 +50,7 @@ module PostgresPR
       alias at_end? eof?
       alias content string
       if STRING_NATIVE_UNPACK_SINGLE
-        def read_int16_network
-          read(2).get_int16_network(0)
-        end
-        def read_int32_network
-          read(4).get_int32_network(0)
-        end
+        include ReadUnpack
       else
         def read_int16_network
           byte1, byte2 = readbyte, readbyte
