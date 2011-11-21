@@ -33,6 +33,8 @@ module PostgresPR
       alias read_byte readbyte
       alias at_end? eof?
       alias content string
+      alias init_buffer initialize
+      public :init_buffer
       def read_int16_network
         byte1, byte2 = readbyte, readbyte
         (byte1 < 128 ? byte1 : byte1 - 256) * 256 + byte2
@@ -91,6 +93,10 @@ module PostgresPR
       end 
 
       def initialize(content)
+        self.init_buffer content
+      end
+
+      def init_buffer(content)
         @size = content.size
         @content = content
         @position = 0
