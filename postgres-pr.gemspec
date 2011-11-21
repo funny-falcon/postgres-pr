@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 require "postgres-pr/version"
 
 spec = Gem::Specification.new do |s|
-  s.name = 'postgres-pr'
+  s.name = 'postgres-pr-opt'
   s.version = PostgresPR::VERSION
   s.summary = %q{A pure Ruby interface to the PostgreSQL (>= 7.4) database.}
 
