@@ -33,7 +33,7 @@ class DumpError < PGError; end
 
 
 # Base class representing a PostgreSQL protocol message
-class Message
+class Message < Utils::ReadBuffer
   # One character message-typecode to class map
   MsgTypeMap = Hash.new { UnknownMessageType }
 
@@ -54,22 +54,23 @@ class Message
     raise ParseError unless length >= 4
 
     # initialize buffer
-    buffer = Utils::ReadBuffer.of_size(startup ? length : 1+length)
-    buffer.write(type) unless startup
-    buffer.write(length_s)
-    buffer.copy_from_stream(stream, length-4)
-    
-    (startup ? StartupMessage : MsgTypeMap[type]).create(buffer)
+    body = stream.read_exactly_n_bytes(length - 4)
+    (startup ? StartupMessage : MsgTypeMap[type]).create("#{type}#{length_s}#{body}")
   end
 
   def self.create(buffer)
     obj = allocate
-    obj.parse(buffer)
+    obj.init_buffer buffer
+    obj.parse(obj)
     obj
   end
 
   def self.dump(*args)
     new(*args).dump
+  end
+
+  def buffer
+    self
   end
 
   def dump(body_size=0)
@@ -114,11 +115,11 @@ class Authentication < Message
   AuthTypeMap = Hash.new { UnknownAuthType }
 
   def self.create(buffer)
-    buffer.position = 5
-    authtype = buffer.read_int32_network
+    authtype = buffer.get_int32_network(5)
     klass = AuthTypeMap[authtype]
     obj = klass.allocate
-    obj.parse(buffer)
+    obj.init_buffer buffer
+    obj.parse(obj)
     obj
   end
 

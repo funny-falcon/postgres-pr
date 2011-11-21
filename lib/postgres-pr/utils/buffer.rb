@@ -49,6 +49,8 @@ module PostgresPR
       alias read_byte readbyte
       alias at_end? eof?
       alias content string
+      alias init_buffer initialize
+      public :init_buffer
       if STRING_NATIVE_UNPACK_SINGLE
         include ReadUnpack
       else
@@ -111,6 +113,10 @@ module PostgresPR
       end 
 
       def initialize(content)
+        self.init_buffer content
+      end
+
+      def init_buffer(content)
         @size = content.size
         @content = content
         @position = 0
