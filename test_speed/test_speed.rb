@@ -1,5 +1,6 @@
 require 'benchmark'
 $:.unshift File.join(File.dirname(__FILE__),'../lib')
+$:.unshift File.join(File.dirname(__FILE__),'../ext')
 
 require 'postgres-pr/connection'
 c = PostgresPR::Connection.new('Intercable', 'yura')
