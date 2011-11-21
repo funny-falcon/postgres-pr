@@ -5,6 +5,7 @@ require 'postgres-pr/connection'
 c = PostgresPR::Connection.new('Intercable', 'yura')
 
 big_str = 'a'*10000
+big_query = "select substr('#{big_str}', 10, 1) as s"
 Benchmark.bmbm(6) do |x|
   x.report("simple") do
     5000.times{ c.query('SELECT 1+2').rows }
@@ -16,6 +17,6 @@ Benchmark.bmbm(6) do |x|
     50.times{ c.query('select * from clients limit 100').rows }
   end
   x.report("send bigstr") do 
-    5000.times{ c.query("select substr('#{big_str}', 10, 1) as s").rows }
+    5000.times{ c.query(big_query).rows }
   end
 end
