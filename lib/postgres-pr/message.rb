@@ -463,7 +463,7 @@ class RowDescription < Message
     end
   end
 
-  if RUBY_ENGINE == 'rbx'
+  if RUBY_ENGINE == 'rbx' || (RUBY_ENGINE == 'ruby' && RUBY_VERSION > '1.9' && Utils::STRING_NATIVE_UNPACK_SINGLE)
     def parse(buffer)
       super do
         fields = []
