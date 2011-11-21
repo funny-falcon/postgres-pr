@@ -12,8 +12,7 @@ end
 
 if RUBY_ENGINE == 'ruby'
   begin
-    require 'unpack_single'
-    puts "unpack loaded"
+    require 'postgres-pr/utils/unpack_single'
   rescue LoadError
   end
 end
