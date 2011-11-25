@@ -17,6 +17,7 @@ class Connection
 
   # A block which is called with the NoticeResponse object as parameter.
   attr_accessor :notice_processor
+  attr_reader :params
 
   #
   # Returns one of the following statuses:

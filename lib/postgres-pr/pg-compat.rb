@@ -40,6 +40,7 @@ class PGconn
   end
 
   alias exec query
+  alias async_exec exec
 
   def transaction_status
     @conn.transaction_status
@@ -51,6 +52,26 @@ class PGconn
 
   def escape(str)
     self.class.escape(str)
+  end
+  
+  if RUBY_VERSION < '1.9'
+    def escape_string(str)
+      case @conn.params['client_encoding'] 
+      when /ASCII/, /ISO/, /KOI8/, /WIN/, /LATIN/
+        def self.escape_string(str)
+          str.gsub("'", "''").gsub("\\", "\\\\\\\\")
+        end
+      else
+        def self.escape_string(str)
+          str.gsub(/'/u, "''").gsub(/\\/u, "\\\\\\\\")
+        end
+      end
+      escape_string(str)
+    end
+  else
+    def escape_string(str)
+      str.gsub("'", "''").gsub("\\", "\\\\\\\\")
+    end
   end
 
   def notice_processor
@@ -86,17 +107,33 @@ class PGresult
   def [](index)
     @result[index]
   end
- 
+  
   def initialize(res)
     @res = res
     @fields = @res.fields.map {|f| f.name}
     @result = []
     @res.rows.each do |row|
-      @result << REXML::SyncEnumerator.new(fields, row).map {|name, value| [name, value]}
+      h = {}
+      @fields.zip(row){|field, value| h[field] = value}
+      @result << h
     end
   end
 
-  # TODO: status, getlength, cmdstatus
+  # TODO: status, cmdstatus
+  
+  def values
+    @res.rows
+  end
+  
+  def column_values(i)
+    raise IndexError, "no column #{i} in result"  unless i < @fields.size
+    @res.rows.map{|row| row[i]}
+  end
+  
+  def field_values(field)
+    raise IndexError, "no such field '#{field}' in result"  unless @fields.include?(field)
+    @result.map{|row| row[field]}
+  end
 
   attr_reader :result, :fields
 
@@ -112,13 +149,17 @@ class PGresult
 
   alias :nfields :num_fields
 
-  def fieldname(index)
+  def fname(index)
     @fields[index]
   end
-
-  def fieldnum(name)
+  
+  alias fieldname fname
+  
+  def fnum(name)
     @fields.index(name)
   end
+  
+  alias fieldnum fnum
 
   def type(index)
     # TODO: correct?
@@ -134,7 +175,11 @@ class PGresult
   end
 
   def getvalue(tup_num, field_num)
-    @result[tup_num][field_num]
+    @res.rows[tup_num][field_num]
+  end
+  
+  def getlength(tup_num, field_num)
+    @res.rows[typ_num][field_num].length
   end
 
   def status
