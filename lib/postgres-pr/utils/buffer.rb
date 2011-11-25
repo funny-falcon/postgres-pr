@@ -92,7 +92,9 @@ module PostgresPR
 
       # returns a Ruby string without the trailing NUL character
       def read_cstring
-        readline(NUL)
+        s = readline(NUL)
+        s.chop!
+        s
       end
 
     end
