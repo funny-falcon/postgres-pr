@@ -3,8 +3,12 @@
 
 require 'rexml/syncenumerator'
 require 'postgres-pr/connection'
+require 'postgres-pr/typeconv/conv'
+require 'postgres-pr/typeconv/bytea'
 
 class PGconn
+  extend Postgres::Conversion
+  include Postgres::Conversion
   PQTRANS_IDLE    = 0 #(connection idle)
   PQTRANS_INTRANS = 2 #(idle, within transaction block)
   PQTRANS_INERROR = 3 #(idle, within failed transaction)
@@ -32,6 +36,8 @@ class PGconn
   def close
     @conn.close
   end
+
+  alias finish close
 
   attr_reader :host, :db, :user
 

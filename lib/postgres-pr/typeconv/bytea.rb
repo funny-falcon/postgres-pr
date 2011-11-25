@@ -27,4 +27,6 @@ module Postgres::Conversion
       }
     end
   end
+
+  alias unescape_bytea decode_bytea
 end
